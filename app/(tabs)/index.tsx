@@ -1,74 +1,185 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Alert, View, TextInput, StyleSheet, Text, TouchableOpacity ,useColorScheme} from 'react-native';
+import React from 'react';
+import Spinner from 'react-native-loading-spinner-overlay';
+import { supabase } from '../../config/initSupabase';
+import { Button } from 'react-native-paper';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const theme = {
+  dark: {
+    background: '#151515',
+    cardBackground: '#232323',
+    text: '#fff',
+    subText: '#999',
+    border: '#8756c8',
+    divider: '#333',
+    primary: '#8756c8',
+    secondary: '#bc85a3',
+  },
+  light: {
+    background: '#ffffff',
+    cardBackground: '#f5f5f5',
+    text: '#000000',
+    subText: '#666666',
+    border: '#8756c8',
+    divider: '#e0e0e0',
+    primary: '#8756c8',
+    secondary: '#bc85a3',
+  },
+};
+const Login = () => {
+   const colorScheme = useColorScheme();
+  const colors = theme[colorScheme === 'dark' ? 'dark' : 'light'];
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  
+  const onSignInPress = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) Alert.alert(error.message);
+    setLoading(false);
+  };
+
+  const onSignUpPress = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
+    if (error) Alert.alert(error.message);
+    setLoading(false);
+  };
+
+   return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Spinner visible={loading} />
+      
+      <View style={styles.headerContainer}>
+        <Text style={[styles.header, { color: colors.text }]}>Filezuu</Text>
+        <Text style={[styles.subHeader, { color: colors.subText }]}>Welcome back!</Text>
+      </View>
+
+      <View style={styles.formContainer}>
+        <TextInput
+          autoCapitalize="none"
+          placeholder="Email address"
+          placeholderTextColor={colors.subText}
+          value={email}
+          onChangeText={setEmail}
+          style={[styles.inputField, { 
+            backgroundColor: colors.cardBackground,
+            borderColor: colors.border,
+            color: colors.text
+          }]}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <TextInput
+          placeholder="Password"
+          placeholderTextColor={colors.subText}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={[styles.inputField, { 
+            backgroundColor: colors.cardBackground,
+            borderColor: colors.border,
+            color: colors.text
+          }]}
+        />
+
+        <TouchableOpacity 
+          onPress={onSignInPress} 
+          style={[styles.signInButton, { backgroundColor: colors.primary }]}
+        >
+          <Text style={styles.buttonText}>Sign in</Text>
+        </TouchableOpacity>
+
+        <View style={styles.divider}>
+          <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
+          <Text style={[styles.dividerText, { color: colors.subText }]}>OR</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
+        </View>
+
+        <Button 
+          onPress={onSignUpPress} 
+          mode="contained" 
+          style={[styles.signUpButton, { backgroundColor: colors.secondary }]}
+          labelStyle={styles.signUpButtonText}
+        >
+          Create an Account
+        </Button>
+      </View>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+  },
+  headerContainer: {
+    marginTop: 100,
+    alignItems: 'center',
+    paddingVertical: 30,
+  },
+  header: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subHeader: {
+    fontSize: 16,
+    marginBottom: 30,
+  },
+  formContainer: {
+    paddingHorizontal: 24,
+  },
+  inputField: {
+    marginVertical: 8,
+    height: 55,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 16,
+  },
+  signInButton: {
+    marginTop: 20,
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    elevation: 3,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginVertical: 30,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  dividerLine: {
+    flex: 1,
+    height: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  dividerText: {
+    paddingHorizontal: 10,
+    fontSize: 14,
+  },
+  signUpButton: {
+    borderRadius: 12,
+    height: 50,
+    justifyContent: 'center',
+  },
+  signUpButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
+
+export default Login;
