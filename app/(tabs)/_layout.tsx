@@ -1,39 +1,38 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import { Slot, useRouter, useSegments } from 'expo-router';
+import { useEffect } from 'react';
+import { AuthProvider, useAuth } from '@/provider/authprovider';
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+// Makes sure the user is authenticated before accessing protected pages
+const InitialLayout = () => {
+  const { session, initialized } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  useEffect(() => {
+    if (!initialized) return;
 
+    // Check if the path/url is in the (auth) group
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (session && !inAuthGroup) {
+      // Redirect authenticated users to the list page
+      router.replace('/list');
+    } else if (!session) {
+      // Redirect unauthenticated users to the login page
+      router.replace('/');
+    }
+  }, [session, initialized]);
+
+  return <Slot />;
+};
+
+// Wrap the app with the AuthProvider
+const RootLayout = () => {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-     
-    </Tabs>
+    <AuthProvider>
+      <InitialLayout />
+    </AuthProvider>
   );
-}
+};
+
+export default RootLayout;
